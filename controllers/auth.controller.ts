@@ -9,7 +9,7 @@ import {
   unauthorizedResponse,
   validationErrorResponse,
 } from '@/utils/response';
-import { logger } from '@/utils/logger';
+// import { logger } from '@/utils/logger';
 import { ZodError } from 'zod';
 import { connectDB } from '@/lib/db';
 
@@ -35,7 +35,7 @@ export const AuthController = {
       if (error instanceof Error && error.message.includes('already exists')) {
         return errorResponse(error.message, 409);
       }
-      logger.error('Register error', { error });
+      // logger.error('Register error', { error });
       return errorResponse('Registration failed', 500);
     }
   },
@@ -65,10 +65,10 @@ export const AuthController = {
       const token = signToken({ userId: String(user._id), email: user.email, role: user.role });
       const response = successResponse({ user: user.toSafeObject(), token }, 'Login successful');
       setAuthCookie(response, token);
-      logger.info('User logged in', { userId: user._id });
+      // logger.info('User logged in', { userId: user._id });
       return response;
     } catch (error) {
-      logger.error('Login error', { error });
+      // logger.error('Login error', { error });
       return errorResponse('Login failed', 500);
     }
   },

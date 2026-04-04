@@ -13,7 +13,7 @@ import {
   validationErrorResponse,
   forbiddenResponse,
 } from '@/utils/response';
-import { logger } from '@/utils/logger';
+// import { logger } from '@/utils/logger';
 
 export const UserController = {
   async listUsers(req: AuthenticatedRequest): Promise<NextResponse> {
@@ -32,7 +32,7 @@ export const UserController = {
         totalPages: result.totalPages,
       });
     } catch (error) {
-      logger.error('List users error', { error });
+      // logger.error('List users error', { error });
       return errorResponse('Failed to retrieve users', 500);
     }
   },
@@ -49,7 +49,7 @@ export const UserController = {
 
       return successResponse(user.toSafeObject(), 'User retrieved successfully');
     } catch (error) {
-      logger.error('Get user error', { error });
+      // logger.error('Get user error', { error });
       return errorResponse('Failed to retrieve user', 500);
     }
   },
@@ -70,7 +70,7 @@ export const UserController = {
 
       return successResponse(user.toSafeObject(), 'User role updated successfully');
     } catch (error) {
-      logger.error('Update role error', { error });
+      // logger.error('Update role error', { error });
       return errorResponse('Failed to update role', 500);
     }
   },
@@ -91,7 +91,7 @@ export const UserController = {
 
       return successResponse(user.toSafeObject(), `User ${parsed.data.status === 'active' ? 'activated' : 'deactivated'} successfully`);
     } catch (error) {
-      logger.error('Update status error', { error });
+      // logger.error('Update status error', { error });
       return errorResponse('Failed to update status', 500);
     }
   },
@@ -107,7 +107,7 @@ export const UserController = {
 
       return successResponse(null, 'User deleted successfully');
     } catch (error) {
-      logger.error('Delete user error', { error });
+      // logger.error('Delete user error', { error });
       return errorResponse('Failed to delete user', 500);
     }
   },

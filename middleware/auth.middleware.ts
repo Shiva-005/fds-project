@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTokenFromRequest, verifyToken, JWTPayload } from '@/lib/auth';
 import { unauthorizedResponse, forbiddenResponse } from '@/utils/response';
-import { logger } from '@/utils/logger';
+// import { logger } from '@/utils/logger';
 import { connectDB } from '@/lib/db';
 import User from '@/models/User';
 
@@ -62,7 +62,7 @@ export function verifyJWT<P = unknown>(handler: RouteHandler<P>) {
 
             return handler(req as AuthenticatedRequest, context);
         } catch (error) {
-            logger.error('Auth middleware error', { error });
+            // logger.error('Auth middleware error', { error });
             return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
         }
     };
@@ -77,11 +77,11 @@ export function authorizeRoles(...roles: Array<'viewer' | 'analyst' | 'admin'>) 
             const { role } = req.user;
 
             if (!roles.includes(role)) {
-                logger.warn('Forbidden access attempt', {
-                    userId: req.user.userId,
-                    userRole: role,
-                    requiredRoles: roles,
-                });
+                // logger.warn('Forbidden access attempt', {
+                //     userId: req.user.userId,
+                //     userRole: role,
+                //     requiredRoles: roles,
+                // });
                 return forbiddenResponse(`Access restricted to: ${roles.join(', ')}`);
             }
 

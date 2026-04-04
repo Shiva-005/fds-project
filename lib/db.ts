@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { logger } from '@/utils/logger';
+// import { logger } from '@/utils/logger';
 
 const MONGODB_URI = process.env.MONGODB_URI!;
 
@@ -37,10 +37,10 @@ export async function connectDB(): Promise<typeof mongoose> {
         };
 
         cached.promise = mongoose.connect(MONGODB_URI, opts).then((mg) => {
-            logger.info('MongoDB connected successfully');
+            // logger.info('MongoDB connected successfully');
             return mg;
         }).catch((err) => {
-            logger.error('MongoDB connection failed', { error: err });
+            // logger.error('MongoDB connection failed', { error: err });
             cached.promise = null; // Reset promise on failure
             throw err;
         });
@@ -50,7 +50,7 @@ export async function connectDB(): Promise<typeof mongoose> {
         cached.conn = await cached.promise;
     } catch (err) {
         cached.promise = null;
-        logger.error('MongoDB connection error', { error: err });
+        // logger.error('MongoDB connection error', { error: err });
         throw err;
     }
 

@@ -13,7 +13,7 @@ import {
   notFoundResponse,
   validationErrorResponse,
 } from '@/utils/response';
-import { logger } from '@/utils/logger';
+// import { logger } from '@/utils/logger';
 
 export const FinanceController = {
   async createRecord(req: AuthenticatedRequest): Promise<NextResponse> {
@@ -27,7 +27,7 @@ export const FinanceController = {
       normalized.id = normalized._id?.toString() || normalized.id;
       return createdResponse(normalized, 'Financial record created successfully');
     } catch (error) {
-      logger.error('Create record error', { error });
+      // logger.error('Create record error', { error });
       return errorResponse('Failed to create record', 500);
     }
   },
@@ -47,7 +47,7 @@ export const FinanceController = {
         totalPages: result.totalPages,
       });
     } catch (error) {
-      logger.error('List records error', { error });
+      // logger.error('List records error', { error });
       return errorResponse('Failed to retrieve records', 500);
     }
   },
@@ -60,7 +60,7 @@ export const FinanceController = {
       normalized.id = normalized._id?.toString() || normalized.id;
       return successResponse(normalized, 'Record retrieved successfully');
     } catch (error) {
-      logger.error('Get record error', { error });
+      // logger.error('Get record error', { error });
       return errorResponse('Failed to retrieve record', 500);
     }
   },
@@ -85,7 +85,7 @@ export const FinanceController = {
       normalized.id = normalized._id?.toString() || normalized.id;
       return successResponse(normalized, 'Record updated successfully');
     } catch (error) {
-      logger.error('Update record error', { error });
+      // logger.error('Update record error', { error });
       return errorResponse('Failed to update record', 500);
     }
   },
@@ -104,7 +104,7 @@ export const FinanceController = {
       if (!deleted) return notFoundResponse('Financial record not found');
       return successResponse(null, 'Record deleted successfully');
     } catch (error) {
-      logger.error('Delete record error', { error });
+      // logger.error('Delete record error', { error });
       return errorResponse('Failed to delete record', 500);
     }
   },
@@ -116,7 +116,7 @@ export const FinanceController = {
       const summary = await FinanceService.getSummary(req.user.userId, req.user.role);
       return successResponse(summary, 'Dashboard summary retrieved');
     } catch (error) {
-      logger.error('Get summary error', { error });
+      // logger.error('Get summary error', { error });
       return errorResponse('Failed to retrieve summary', 500);
     }
   },
@@ -126,7 +126,7 @@ export const FinanceController = {
       const breakdown = await FinanceService.getCategoryBreakdown(req.user.userId, req.user.role);
       return successResponse(breakdown, 'Category breakdown retrieved');
     } catch (error) {
-      logger.error('Get category breakdown error', { error });
+      // logger.error('Get category breakdown error', { error });
       return errorResponse('Failed to retrieve category breakdown', 500);
     }
   },
@@ -138,7 +138,7 @@ export const FinanceController = {
       const trends = await FinanceService.getMonthlyTrends(req.user.userId, months, req.user.role);
       return successResponse(trends, 'Monthly trends retrieved');
     } catch (error) {
-      logger.error('Get trends error', { error });
+      // logger.error('Get trends error', { error });
       return errorResponse('Failed to retrieve trends', 500);
     }
   },
@@ -148,7 +148,7 @@ export const FinanceController = {
       const transactions = await FinanceService.getRecentTransactions(req.user.userId, 5, req.user.role);
       return successResponse(transactions, 'Recent transactions retrieved');
     } catch (error) {
-      logger.error('Get recent transactions error', { error });
+      // logger.error('Get recent transactions error', { error });
       return errorResponse('Failed to retrieve recent transactions', 500);
     }
   },

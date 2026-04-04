@@ -1,7 +1,7 @@
 import FinancialRecord, { IFinancialRecordDocument } from '@/models/FinancialRecord';
 import { CreateRecordInput, UpdateRecordInput, ListRecordsQuery } from '@/validators/record.validator';
 import { connectDB } from '@/lib/db';
-import { logger } from '@/utils/logger';
+// import { logger } from '@/utils/logger';
 import mongoose from 'mongoose';
 
 export interface PaginatedRecords {
@@ -17,7 +17,7 @@ export const FinanceService = {
         await connectDB();
         const record = new FinancialRecord({ ...data, createdBy: userId });
         await record.save();
-        logger.info('Financial record created', { recordId: record._id, userId });
+        // logger.info('Financial record created', { recordId: record._id, userId });
         return record;
     },
 
@@ -91,7 +91,7 @@ export const FinanceService = {
             data,
             { new: true, runValidators: true }
         ).populate('createdBy', 'name email');
-        if (record) logger.info('Financial record updated', { recordId: id });
+        // if (record) logger.info('Financial record updated', { recordId: id });
         return record;
     },
 
@@ -102,7 +102,7 @@ export const FinanceService = {
             { isDeleted: true },
             { new: true }
         );
-        if (result) logger.info('Financial record soft-deleted', { recordId: id });
+        // if (result) logger.info('Financial record soft-deleted', { recordId: id });
         return !!result;
     },
 
