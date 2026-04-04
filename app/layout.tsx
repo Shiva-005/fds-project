@@ -4,7 +4,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Ledger — Finance Dashboard',
+  title: 'FDS — Finance Dashboard System',
   description: 'Production-ready Finance Dashboard with RBAC',
 };
 

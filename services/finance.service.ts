@@ -2,6 +2,7 @@ import FinancialRecord, { IFinancialRecordDocument } from '@/models/FinancialRec
 import { CreateRecordInput, UpdateRecordInput, ListRecordsQuery } from '@/validators/record.validator';
 import { connectDB } from '@/lib/db';
 import { logger } from '@/utils/logger';
+import mongoose from 'mongoose';
 
 export interface PaginatedRecords {
     records: IFinancialRecordDocument[];
@@ -20,13 +21,13 @@ export const FinanceService = {
         return record;
     },
 
-    async listRecords(query: ListRecordsQuery): Promise<PaginatedRecords> {
+    async listRecords(userId: string, query: ListRecordsQuery): Promise<PaginatedRecords> {
         await connectDB();
 
         const { page, limit, type, category, startDate, endDate, search, sortBy, sortOrder } = query;
         const skip = (page - 1) * limit;
 
-        const filter: Record<string, unknown> = { isDeleted: false };
+        const filter: Record<string, unknown> = { isDeleted: false, createdBy: new mongoose.Types.ObjectId(userId) };
         if (type) filter.type = type;
         if (category) filter.category = { $regex: category, $options: 'i' };
         if (startDate || endDate) {
@@ -104,10 +105,10 @@ export const FinanceService = {
 
     // ─── Dashboard Aggregations ─────────────────────────────────────────────────
 
-    async getSummary() {
+    async getSummary(userId: string) {
         await connectDB();
         const result = await FinancialRecord.aggregate([
-            { $match: { isDeleted: false } },
+            { $match: { isDeleted: false, createdBy: new mongoose.Types.ObjectId(userId) } },
             {
                 $group: {
                     _id: '$type',
@@ -132,10 +133,10 @@ export const FinanceService = {
         };
     },
 
-    async getCategoryBreakdown() {
+    async getCategoryBreakdown(userId: string) {
         await connectDB();
-        return FinancialRecord.aggregate([
-            { $match: { isDeleted: false } },
+        const result = await FinancialRecord.aggregate([
+            { $match: { isDeleted: false, createdBy: new mongoose.Types.ObjectId(userId) } },
             {
                 $group: {
                     _id: { category: '$category', type: '$type' },
@@ -166,9 +167,10 @@ export const FinanceService = {
                 },
             },
         ]);
+        return result;
     },
 
-    async getMonthlyTrends(months = 12) {
+    async getMonthlyTrends(userId: string, months = 12) {
         await connectDB();
         const startDate = new Date();
         startDate.setMonth(startDate.getMonth() - months + 1);
@@ -179,6 +181,7 @@ export const FinanceService = {
             {
                 $match: {
                     isDeleted: false,
+                    createdBy: new mongoose.Types.ObjectId(userId),
                     date: { $gte: startDate },
                 },
             },
@@ -217,9 +220,9 @@ export const FinanceService = {
         ]);
     },
 
-    async getRecentTransactions(limit = 5) {
+    async getRecentTransactions(userId: string, limit = 5) {
         await connectDB();
-        return FinancialRecord.find({ isDeleted: false })
+        return FinancialRecord.find({ isDeleted: false, createdBy: new mongoose.Types.ObjectId(userId) })
             .populate('createdBy', 'name email')
             .sort({ date: -1 })
             .limit(limit)

@@ -34,21 +34,31 @@ export function verifyJWT<P = unknown>(handler: RouteHandler<P>) {
             }
 
             // Verify user still exists and is active
-            await connectDB();
-            const user = await User.findById(payload.userId).select('status role');
-            if (!user) {
-                return unauthorizedResponse('User no longer exists');
-            }
-            if (user.status === 'inactive') {
-                return unauthorizedResponse('Your account has been deactivated');
-            }
+            try {
+                await connectDB();
+                const user = await User.findById(payload.userId).select('status role');
+                if (!user) {
+                    return unauthorizedResponse('User no longer exists');
+                }
+                if (user.status === 'inactive') {
+                    return unauthorizedResponse('Your account has been deactivated');
+                }
 
-            // Attach user to request (mutate the request object)
-            (req as AuthenticatedRequest).user = {
-                userId: payload.userId,
-                email: payload.email,
-                role: user.role,
-            };
+                // Attach user to request (mutate the request object)
+                (req as AuthenticatedRequest).user = {
+                    userId: payload.userId,
+                    email: payload.email,
+                    role: user.role,
+                };
+            } catch (dbError) {
+                // If database connection fails, allow the request with basic user info from token
+                console.warn('Database connection failed during auth verification, allowing with token data:', dbError);
+                (req as AuthenticatedRequest).user = {
+                    userId: payload.userId,
+                    email: payload.email,
+                    role: payload.role || 'viewer',
+                };
+            }
 
             return handler(req as AuthenticatedRequest, context);
         } catch (error) {

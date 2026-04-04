@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { MonthlyTrend } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -12,6 +13,7 @@ function fmt(n: number) {
 }
 
 export function TrendChart({ trends, loading }: { trends: MonthlyTrend[]; loading: boolean }) {
+  const { user } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<unknown>(null);
 
@@ -25,17 +27,17 @@ export function TrendChart({ trends, loading }: { trends: MonthlyTrend[]; loadin
       chartRef.current.destroy();
     }
 
-    const labels = trends.length > 0
-      ? trends.map((t) => MONTHS[t.month - 1])
-      : MONTHS.slice(0, 6);
+    if (trends.length === 0) return;
 
-    const incomeData = trends.length > 0
-      ? trends.map((t) => t.data.find((d) => d.type === 'income')?.total ?? 0)
-      : [320000, 410000, 380000, 520000, 490000, 600000];
+    const labels = trends.map((t) => {
+      const monthName = MONTHS[t.month - 1];
+      const currentYear = new Date().getFullYear();
+      return t.year === currentYear ? monthName : `${monthName} ${t.year}`;
+    });
 
-    const expenseData = trends.length > 0
-      ? trends.map((t) => t.data.find((d) => d.type === 'expense')?.total ?? 0)
-      : [150000, 180000, 160000, 220000, 200000, 250000];
+    const incomeData = trends.map((t) => t.data.find((d) => d.type === 'income')?.total ?? 0);
+
+    const expenseData = trends.map((t) => t.data.find((d) => d.type === 'expense')?.total ?? 0);
 
     const netData = incomeData.map((v, i) => v - expenseData[i]);
 
@@ -60,6 +62,32 @@ export function TrendChart({ trends, loading }: { trends: MonthlyTrend[]; loadin
       },
     });
   }, [trends]);
+
+  if (user?.role === 'viewer') {
+    return (
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+        <div style={{ marginBottom: '18px' }}>
+          <h3 style={{ fontFamily: 'var(--serif)', fontSize: '15px', color: 'var(--text)' }}>Revenue Trend</h3>
+        </div>
+        <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: '13px' }}>
+          You do not have access to trend data
+        </div>
+      </div>
+    );
+  }
+
+  if (trends.length === 0 && !loading) {
+    return (
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+        <div style={{ marginBottom: '18px' }}>
+          <h3 style={{ fontFamily: 'var(--serif)', fontSize: '15px', color: 'var(--text)' }}>Revenue Trend</h3>
+        </div>
+        <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: '13px' }}>
+          No trend data available
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>

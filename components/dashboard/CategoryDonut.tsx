@@ -2,18 +2,20 @@
 
 import { useEffect, useRef } from 'react';
 import { CategoryBreakdown } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 const COLORS = ['#2DD4A0','#C9A84C','#4A90E2','#F06B6B','#8B6BF0','#E87040','#60B9E0','#F0C060'];
 
 export function CategoryDonut({ categories, loading }: { categories: CategoryBreakdown[]; loading: boolean }) {
+  const { user } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<unknown>(null);
 
   const items = categories.length > 0
-    ? categories.slice(0, 6).map((c, i) => ({ name: c.category, value: Math.round(c.totalAmount / 1000), color: COLORS[i % COLORS.length] }))
-    : [{ name: 'Salary', value: 65, color: COLORS[0] }, { name: 'Freelance', value: 18, color: COLORS[1] }, { name: 'Invest.', value: 10, color: COLORS[2] }, { name: 'Rent', value: 7, color: COLORS[3] }];
+    ? categories.slice(0, 6).map((c, i) => ({ name: c.category, value: c.totalAmount, color: COLORS[i % COLORS.length] }))
+    : [];
 
-  const total = items.reduce((a, c) => a + c.value, 0);
+  const total = items.reduce((a, c) => a + c.value, 0) || 1;
 
   useEffect(() => {
     if (typeof window === 'undefined' || !canvasRef.current) return;
@@ -22,6 +24,7 @@ export function CategoryDonut({ categories, loading }: { categories: CategoryBre
     if (chartRef.current) { // @ts-expect-error Chart.js
       chartRef.current.destroy();
     }
+    if (categories.length === 0) return;
     // @ts-expect-error Chart.js global
     chartRef.current = new window.Chart(canvasRef.current, {
       type: 'doughnut',
@@ -29,6 +32,34 @@ export function CategoryDonut({ categories, loading }: { categories: CategoryBre
       options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false }, tooltip: { backgroundColor: '#141C2E', titleColor: '#E8EDF5', bodyColor: '#8A9BBF', borderColor: '#1E2D45', borderWidth: 1 } } },
     });
   }, [categories]);
+
+  if (user?.role === 'viewer') {
+    return (
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+          <h3 style={{ fontFamily: 'var(--serif)', fontSize: '15px', color: 'var(--text)' }}>By Category</h3>
+          <span style={{ fontSize: '11px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>0 categories</span>
+        </div>
+        <div style={{ height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: '13px' }}>
+          You do not have access to category data
+        </div>
+      </div>
+    );
+  }
+
+  if (categories.length === 0 && !loading) {
+    return (
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+          <h3 style={{ fontFamily: 'var(--serif)', fontSize: '15px', color: 'var(--text)' }}>By Category</h3>
+          <span style={{ fontSize: '11px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>0 categories</span>
+        </div>
+        <div style={{ height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: '13px' }}>
+          No category data available
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>

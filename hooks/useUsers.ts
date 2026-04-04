@@ -29,10 +29,19 @@ export function useUsers() {
     return { success: res.success, message: res.message };
   }, [fetchUsers]);
 
-  const updateStatus = useCallback(async (id: string, status: string) => {
-    const res = await api.patch(`/users/${id}`, { status });
-    if (res.success) fetchUsers();
-    return { success: res.success, message: res.message };
+  const updateUser = useCallback(async (id: string, updates: { role?: string; status?: string }) => {
+    let success = true;
+    let message = 'User updated successfully';
+    if (updates.role) {
+      const res = await api.put(`/users/${id}`, { role: updates.role });
+      if (!res.success) { success = false; message = res.message; }
+    }
+    if (updates.status) {
+      const res = await api.patch(`/users/${id}`, { status: updates.status });
+      if (!res.success) { success = false; message = res.message; }
+    }
+    if (success) fetchUsers();
+    return { success, message };
   }, [fetchUsers]);
 
   const deleteUser = useCallback(async (id: string) => {
@@ -41,5 +50,5 @@ export function useUsers() {
     return { success: res.success, message: res.message };
   }, [fetchUsers]);
 
-  return { users, loading, error, updateRole, updateStatus, deleteUser, refetch: fetchUsers };
+  return { users, loading, error, updateUser, deleteUser, refetch: fetchUsers };
 }

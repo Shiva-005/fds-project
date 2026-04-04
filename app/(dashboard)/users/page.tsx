@@ -26,7 +26,7 @@ const roleBadge = (role: string) => {
 };
 
 export default function UsersPage() {
-  const { users, loading, error, updateRole, updateStatus, deleteUser } = useUsers();
+  const { users, loading, error, updateUser, deleteUser } = useUsers();
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
   const [editUser, setEditUser] = useState<User | null>(null);
@@ -49,20 +49,44 @@ export default function UsersPage() {
 
   const handleSave = async () => {
     if (!editUser) return;
+    const updatePayload: { role?: UserRole; status?: UserStatus } = {};
+    if (editRole !== editUser.role) updatePayload.role = editRole;
+    if (editStatus !== editUser.status) updatePayload.status = editStatus;
+    if (Object.keys(updatePayload).length === 0) {
+      toast('No changes made');
+      setEditUser(null);
+      return;
+    }
+
+    const userId = editUser._id || (editUser as any).id || '';
+    if (!userId) {
+      toast('Unable to update user: missing ID', 'error');
+      setEditUser(null);
+      return;
+    }
+
     setSubmitting(true);
-    const results = await Promise.all([
-      editRole !== editUser.role ? updateRole(editUser._id, editRole) : Promise.resolve({ success: true, message: '' }),
-      editStatus !== editUser.status ? updateStatus(editUser._id, editStatus) : Promise.resolve({ success: true, message: '' }),
-    ]);
+    const res = await updateUser(userId, updatePayload);
     setSubmitting(false);
-    if (results.every(r => r.success)) { toast('User updated successfully'); setEditUser(null); }
-    else toast(results.find(r => !r.success)?.message ?? 'Update failed', 'error');
+
+    if (res.success) {
+      toast('User updated successfully');
+      setEditUser(null);
+    } else {
+      toast(res.message, 'error');
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    const userId = deleteTarget._id || (deleteTarget as any).id || '';
+    if (!userId) {
+      toast('Unable to delete user: missing ID', 'error');
+      setDeleteTarget(null);
+      return;
+    }
     setSubmitting(true);
-    const res = await deleteUser(deleteTarget._id);
+    const res = await deleteUser(userId);
     setSubmitting(false);
     if (res.success) { toast('User deleted'); setDeleteTarget(null); }
     else toast(res.message, 'error');
@@ -114,9 +138,10 @@ export default function UsersPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '14px' }}>
           {filtered.map((u, idx) => {
             const rb = roleBadge(u.role);
-            const isSelf = u._id === currentUser?._id;
+            const getUserId = (user: any) => user._id || (user as any).id || '';
+            const isSelf = getUserId(u) === getUserId(currentUser);
             return (
-              <div key={u._id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '18px', transition: 'border-color 0.2s', cursor: 'default' }}
+              <div key={u._id || `${u.email}-${idx}`} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '18px', transition: 'border-color 0.2s', cursor: 'default' }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border2)')}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>

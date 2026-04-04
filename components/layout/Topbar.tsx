@@ -7,16 +7,16 @@ import { useRecords } from '@/hooks/useRecords';
 import { useToast } from '@/components/ui/Toast';
 
 const pageTitles: Record<string, { title: string; bc: string }> = {
-  '/dashboard': { title: 'Dashboard', bc: 'ledger / overview' },
-  '/records': { title: 'Records', bc: 'ledger / records' },
-  '/analytics': { title: 'Analytics', bc: 'ledger / analytics' },
-  '/users': { title: 'User Management', bc: 'ledger / users' },
-  '/settings': { title: 'Settings', bc: 'ledger / settings' },
+  '/dashboard': { title: 'Dashboard', bc: 'FDS / overview' },
+  '/records': { title: 'Records', bc: 'FDS / records' },
+  '/analytics': { title: 'Analytics', bc: 'FDS / analytics' },
+  '/users': { title: 'User Management', bc: 'FDS / users' },
+  '/settings': { title: 'Settings', bc: 'FDS / settings' },
 };
 
 export function Topbar() {
   const pathname = usePathname();
-  const page = pageTitles[pathname] ?? { title: 'Ledger', bc: 'ledger' };
+  const page = pageTitles[pathname] ?? { title: 'FDS', bc: 'FDS' };
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ amount: '', type: 'income', category: 'Salary', date: new Date().toISOString().split('T')[0], note: '' });
   const [submitting, setSubmitting] = useState(false);

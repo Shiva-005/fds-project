@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useAuth } from '@/context/AuthContext';
 import { MonthlyTrend, CategoryBreakdown } from '@/types';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -15,7 +16,7 @@ function fmt(n: number) {
 }
 
 function useChart(
-  ref: React.RefObject<HTMLCanvasElement>,
+  ref: React.RefObject<HTMLCanvasElement | null>,
   deps: unknown[],
   config: () => object | null
 ) {
@@ -39,30 +40,43 @@ function useChart(
 
 function AnalyticsChart({ trends }: { trends: MonthlyTrend[] }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const labels = trends.length > 0 ? trends.map(t => MONTHS[t.month - 1]) : MONTHS;
-  const incomeData = trends.length > 0 ? trends.map(t => t.data.find(d => d.type === 'income')?.total ?? 0) : [3200000,4100000,3800000,5200000,4900000,6000000,5600000,4700000,5400000,5800000,6200000,7000000];
-  const expenseData = trends.length > 0 ? trends.map(t => t.data.find(d => d.type === 'expense')?.total ?? 0) : [1500000,1800000,1600000,2200000,2000000,2500000,2400000,1900000,2100000,2300000,2600000,3000000];
+  const hasData = trends.length > 0;
+  const labels = hasData ? trends.map(t => MONTHS[t.month - 1]) : [];
+  const incomeData = hasData ? trends.map(t => t.data.find(d => d.type === 'income')?.total ?? 0) : [];
+  const expenseData = hasData ? trends.map(t => t.data.find(d => d.type === 'expense')?.total ?? 0) : [];
   const netData = incomeData.map((v, i) => v - expenseData[i]);
 
-  useChart(ref, [trends], () => ({
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Income', data: incomeData, backgroundColor: 'rgba(45,212,160,0.2)', borderColor: '#2DD4A0', borderWidth: 1.5, borderRadius: 3, order: 2 },
-        { label: 'Expense', data: expenseData, backgroundColor: 'rgba(240,107,107,0.2)', borderColor: '#F06B6B', borderWidth: 1.5, borderRadius: 3, order: 3 },
-        { type: 'line', label: 'Net', data: netData, borderColor: '#C9A84C', borderWidth: 2, pointBackgroundColor: '#C9A84C', pointRadius: 3, tension: 0.4, fill: false, order: 1 },
-      ],
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#141C2E', titleColor: '#E8EDF5', bodyColor: '#8A9BBF', borderColor: '#1E2D45', borderWidth: 1, callbacks: { label: (ctx: { dataset: { label: string }; parsed: { y: number } }) => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` } } },
-      scales: {
-        x: { grid: { color: 'rgba(30,45,69,0.5)', lineWidth: 0.5 }, ticks: { color: '#4A5C80', font: { size: 11 } } },
-        y: { grid: { color: 'rgba(30,45,69,0.5)', lineWidth: 0.5 }, ticks: { color: '#4A5C80', font: { size: 10 }, callback: (v: number) => fmt(v) } },
+  useChart(ref, [trends], () => {
+    if (!hasData) return null;
+    return {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Income', data: incomeData, backgroundColor: 'rgba(45,212,160,0.2)', borderColor: '#2DD4A0', borderWidth: 1.5, borderRadius: 3, order: 2 },
+          { label: 'Expense', data: expenseData, backgroundColor: 'rgba(240,107,107,0.2)', borderColor: '#F06B6B', borderWidth: 1.5, borderRadius: 3, order: 3 },
+          { type: 'line', label: 'Net', data: netData, borderColor: '#C9A84C', borderWidth: 2, pointBackgroundColor: '#C9A84C', pointRadius: 3, tension: 0.4, fill: false, order: 1 },
+        ],
       },
-    },
-  }));
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { backgroundColor: '#141C2E', titleColor: '#E8EDF5', bodyColor: '#8A9BBF', borderColor: '#1E2D45', borderWidth: 1, callbacks: { label: (ctx: { dataset: { label: string }; parsed: { y: number } }) => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` } } },
+        scales: {
+          x: { grid: { color: 'rgba(30,45,69,0.5)', lineWidth: 0.5 }, ticks: { color: '#4A5C80', font: { size: 11 } } },
+          y: { grid: { color: 'rgba(30,45,69,0.5)', lineWidth: 0.5 }, ticks: { color: '#4A5C80', font: { size: 10 }, callback: (v: number) => fmt(v) } },
+        },
+      },
+    };
+  });
+
+  if (!hasData) {
+    return (
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', marginBottom: '14px', textAlign: 'center' }}>
+        <h3 style={{ fontFamily: 'var(--serif)', fontSize: '15px', color: 'var(--text)' }}>Income vs Expense — 12 Month View</h3>
+        <p style={{ fontSize: '13px', color: 'var(--text3)', marginTop: '10px' }}>No data available. Add some financial records to see analytics.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', marginBottom: '14px' }}>
@@ -84,14 +98,29 @@ function AnalyticsChart({ trends }: { trends: MonthlyTrend[] }) {
 function ExpenseDonut({ categories }: { categories: CategoryBreakdown[] }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const expenseCats = categories.filter(c => c.breakdown.some(b => b.type === 'expense')).slice(0, 6);
-  const labels = expenseCats.length > 0 ? expenseCats.map(c => c.category) : ['Rent','Food','Transport','Utilities','Healthcare','Other'];
-  const data = expenseCats.length > 0 ? expenseCats.map(c => c.breakdown.find(b => b.type === 'expense')?.total ?? 0) : [38, 20, 12, 14, 9, 7];
+  const hasData = expenseCats.length > 0;
+  const labels = hasData ? expenseCats.map(c => c.category) : [];
+  const data = hasData ? expenseCats.map(c => c.breakdown.find(b => b.type === 'expense')?.total ?? 0) : [];
 
-  useChart(ref, [categories], () => ({
-    type: 'doughnut',
-    data: { labels, datasets: [{ data, backgroundColor: COLORS, borderWidth: 0, hoverOffset: 4 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { display: true, position: 'bottom', labels: { color: '#8A9BBF', font: { size: 10 }, boxWidth: 8, padding: 10 } }, tooltip: { backgroundColor: '#141C2E', titleColor: '#E8EDF5', bodyColor: '#8A9BBF', borderColor: '#1E2D45', borderWidth: 1 } } },
-  }));
+  useChart(ref, [categories], () => {
+    if (!hasData) return null;
+    return {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data, backgroundColor: COLORS, borderWidth: 0, hoverOffset: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { display: true, position: 'bottom', labels: { color: '#8A9BBF', font: { size: 10 }, boxWidth: 8, padding: 10 } }, tooltip: { backgroundColor: '#141C2E', titleColor: '#E8EDF5', bodyColor: '#8A9BBF', borderColor: '#1E2D45', borderWidth: 1 } } },
+    };
+  });
+
+  if (!hasData) {
+    return (
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+        <div style={{ marginBottom: '18px' }}><h3 style={{ fontFamily: 'var(--serif)', fontSize: '15px', color: 'var(--text)' }}>Expense Breakdown</h3></div>
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text3)' }}>No expense data available.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
@@ -104,21 +133,36 @@ function ExpenseDonut({ categories }: { categories: CategoryBreakdown[] }) {
 function IncomeBar({ categories }: { categories: CategoryBreakdown[] }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const incomeCats = categories.filter(c => c.breakdown.some(b => b.type === 'income')).slice(0, 6);
-  const labels = incomeCats.length > 0 ? incomeCats.map(c => c.category) : ['Salary','Freelance','Investments','Dividends','Rental','Others'];
-  const data = incomeCats.length > 0 ? incomeCats.map(c => c.breakdown.find(b => b.type === 'income')?.total ?? 0) : [60, 20, 10, 5, 3, 2];
+  const hasData = incomeCats.length > 0;
+  const labels = hasData ? incomeCats.map(c => c.category) : [];
+  const data = hasData ? incomeCats.map(c => c.breakdown.find(b => b.type === 'income')?.total ?? 0) : [];
 
-  useChart(ref, [categories], () => ({
-    type: 'bar',
-    data: { labels, datasets: [{ data, backgroundColor: COLORS, borderWidth: 0, borderRadius: 4 }] },
-    options: {
-      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#141C2E', titleColor: '#E8EDF5', bodyColor: '#8A9BBF', borderColor: '#1E2D45', borderWidth: 1, callbacks: { label: (ctx: { parsed: { x: number } }) => ` ${fmt(ctx.parsed.x)}` } } },
-      scales: {
-        x: { grid: { color: 'rgba(30,45,69,0.5)', lineWidth: 0.5 }, ticks: { color: '#4A5C80', font: { size: 10 }, callback: (v: number) => fmt(v) } },
-        y: { grid: { display: false }, ticks: { color: '#8A9BBF', font: { size: 11 } } },
+  useChart(ref, [categories], () => {
+    if (!hasData) return null;
+    return {
+      type: 'bar',
+      data: { labels, datasets: [{ data, backgroundColor: COLORS, borderWidth: 0, borderRadius: 4 }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { backgroundColor: '#141C2E', titleColor: '#E8EDF5', bodyColor: '#8A9BBF', borderColor: '#1E2D45', borderWidth: 1, callbacks: { label: (ctx: { parsed: { x: number } }) => ` ${fmt(ctx.parsed.x)}` } } },
+        scales: {
+          x: { grid: { color: 'rgba(30,45,69,0.5)', lineWidth: 0.5 }, ticks: { color: '#4A5C80', font: { size: 10 }, callback: (v: number) => fmt(v) } },
+          y: { grid: { display: false }, ticks: { color: '#8A9BBF', font: { size: 11 } } },
+        },
       },
-    },
-  }));
+    };
+  });
+
+  if (!hasData) {
+    return (
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
+        <div style={{ marginBottom: '18px' }}><h3 style={{ fontFamily: 'var(--serif)', fontSize: '15px', color: 'var(--text)' }}>Top Income Sources</h3></div>
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text3)' }}>No income data available.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px' }}>
@@ -130,18 +174,26 @@ function IncomeBar({ categories }: { categories: CategoryBreakdown[] }) {
 
 export default function AnalyticsPage() {
   const { summary, categories, trends, loading } = useDashboard();
+  const { user } = useAuth();
 
-  const savingsRate = summary ? Math.round(((summary.totalIncome - summary.totalExpense) / summary.totalIncome) * 100) : 0;
-  const avgIncome = summary ? summary.totalIncome / 6 : 0;
-  const avgExpense = summary ? summary.totalExpense / 6 : 0;
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      console.log('Admin accessing analytics dashboard');
+    }
+  }, [user]);
+
+  const hasData = summary && (summary.totalIncome > 0 || summary.totalExpense > 0);
+  const savingsRate = hasData ? Math.round(((summary.totalIncome - summary.totalExpense) / summary.totalIncome) * 100) : 0;
+  const avgIncome = hasData ? summary.totalIncome / 6 : 0;
+  const avgExpense = hasData ? summary.totalExpense / 6 : 0;
 
   const kpis = [
-    { label: 'Savings Rate', value: loading ? '—' : `${savingsRate}%`, badge: '▲ vs last period', accent: 'gold' },
-    { label: 'Avg Monthly Income', value: loading ? '—' : fmt(avgIncome), badge: '▲ 6.8%', accent: 'green' },
-    { label: 'Avg Monthly Expense', value: loading ? '—' : fmt(avgExpense), badge: '▲ 1.2%', accent: 'red' },
+    { label: 'Savings Rate', value: loading ? '—' : hasData ? `${savingsRate}%` : 'N/A', badge: hasData ? '▲ vs last period' : '', accent: hasData ? 'gold' : 'neutral' },
+    { label: 'Avg Monthly Income', value: loading ? '—' : hasData ? fmt(avgIncome) : 'N/A', badge: hasData ? '▲ 6.8%' : '', accent: hasData ? 'green' : 'neutral' },
+    { label: 'Avg Monthly Expense', value: loading ? '—' : hasData ? fmt(avgExpense) : 'N/A', badge: hasData ? '▲ 1.2%' : '', accent: hasData ? 'red' : 'neutral' },
   ];
 
-  const accentMap: Record<string, string> = { gold: 'var(--gold)', green: 'var(--green)', red: 'var(--red)' };
+  const accentMap: Record<string, string> = { gold: 'var(--gold)', green: 'var(--green)', red: 'var(--red)', neutral: 'var(--text3)' };
 
   return (
     <div>

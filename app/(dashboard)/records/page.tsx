@@ -72,11 +72,11 @@ export default function RecordsPage() {
             style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text)', fontSize: '13px', fontFamily: 'var(--sans)', flex: 1 }} />
         </div>
         {[
-          { label: 'Type', key: 'type', opts: [['', 'All Types'], ['income', 'Income'], ['expense', 'Expense']] },
-          { label: 'Category', key: 'category', opts: [['', 'All Categories'], ...['Salary','Freelance','Investments','Rent','Food','Transport','Utilities','Healthcare'].map(c => [c, c])] },
-          { label: 'Sort', key: 'sortBy', opts: [['date','Date'],['amount','Amount'],['category','Category']] },
+          { label: 'Type', key: 'type' as const, opts: [['', 'All Types'], ['income', 'Income'], ['expense', 'Expense']] },
+          { label: 'Category', key: 'category' as const, opts: [['', 'All Categories'], ...['Salary','Freelance','Investments','Rent','Food','Transport','Utilities','Healthcare'].map(c => [c, c])] },
+          { label: 'Sort', key: 'sortBy' as const, opts: [['date','Date'],['amount','Amount'],['category','Category']] },
         ].map(({ key, opts }) => (
-          <select key={key} value={(filters as Record<string, string>)[key] ?? ''} onChange={e => updateFilters({ [key]: e.target.value } as Parameters<typeof updateFilters>[0])}
+          <select key={key} value={filters[key] ?? ''} onChange={e => updateFilters({ [key]: e.target.value } as Parameters<typeof updateFilters>[0])}
             style={{ background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: '8px', padding: '8px 12px', color: 'var(--text2)', fontSize: '12px', fontFamily: 'var(--sans)', outline: 'none', cursor: 'pointer' }}>
             {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>

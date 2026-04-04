@@ -39,7 +39,7 @@ export const FinanceController = {
       const parsed = listRecordsQuerySchema.safeParse(queryObj);
       if (!parsed.success) return validationErrorResponse(parsed.error.issues);
 
-      const result = await FinanceService.listRecords(parsed.data);
+      const result = await FinanceService.listRecords(req.user.userId, parsed.data);
       return successResponse(result.records, 'Records retrieved successfully', 200, {
         total: result.total,
         page: result.page,
@@ -95,9 +95,9 @@ export const FinanceController = {
 
   // ─── Dashboard ───────────────────────────────────────────────────────────────
 
-  async getSummary(_req: AuthenticatedRequest): Promise<NextResponse> {
+  async getSummary(req: AuthenticatedRequest): Promise<NextResponse> {
     try {
-      const summary = await FinanceService.getSummary();
+      const summary = await FinanceService.getSummary(req.user.userId);
       return successResponse(summary, 'Dashboard summary retrieved');
     } catch (error) {
       logger.error('Get summary error', { error });
@@ -105,9 +105,9 @@ export const FinanceController = {
     }
   },
 
-  async getCategoryBreakdown(_req: AuthenticatedRequest): Promise<NextResponse> {
+  async getCategoryBreakdown(req: AuthenticatedRequest): Promise<NextResponse> {
     try {
-      const breakdown = await FinanceService.getCategoryBreakdown();
+      const breakdown = await FinanceService.getCategoryBreakdown(req.user.userId);
       return successResponse(breakdown, 'Category breakdown retrieved');
     } catch (error) {
       logger.error('Get category breakdown error', { error });
@@ -119,7 +119,7 @@ export const FinanceController = {
     try {
       const { searchParams } = new URL(req.url);
       const months = parseInt(searchParams.get('months') ?? '12', 10);
-      const trends = await FinanceService.getMonthlyTrends(months);
+      const trends = await FinanceService.getMonthlyTrends(req.user.userId, months);
       return successResponse(trends, 'Monthly trends retrieved');
     } catch (error) {
       logger.error('Get trends error', { error });
@@ -127,10 +127,10 @@ export const FinanceController = {
     }
   },
 
-  async getRecentTransactions(_req: AuthenticatedRequest): Promise<NextResponse> {
+  async getRecentTransactions(req: AuthenticatedRequest): Promise<NextResponse> {
     try {
-      const recent = await FinanceService.getRecentTransactions(5);
-      return successResponse(recent, 'Recent transactions retrieved');
+      const transactions = await FinanceService.getRecentTransactions(req.user.userId);
+      return successResponse(transactions, 'Recent transactions retrieved');
     } catch (error) {
       logger.error('Get recent transactions error', { error });
       return errorResponse('Failed to retrieve recent transactions', 500);

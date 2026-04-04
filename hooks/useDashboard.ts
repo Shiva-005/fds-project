@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { DashboardSummary, CategoryBreakdown, MonthlyTrend, FinancialRecord } from '@/types';
 import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 export function useDashboard() {
+  const { user } = useAuth();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [categories, setCategories] = useState<CategoryBreakdown[]>([]);
   const [trends, setTrends] = useState<MonthlyTrend[]>([]);
@@ -12,6 +14,8 @@ export function useDashboard() {
 
   useEffect(() => {
     async function fetchAll() {
+      if (!user) return;
+
       setLoading(true);
       try {
         const [summaryRes, recentRes] = await Promise.all([
@@ -21,13 +25,19 @@ export function useDashboard() {
         if (summaryRes.success && summaryRes.data) setSummary(summaryRes.data);
         if (recentRes.success && recentRes.data) setRecent(recentRes.data);
 
-        // These require analyst/admin
-        const [catRes, trendRes] = await Promise.all([
-          api.get<CategoryBreakdown[]>('/dashboard/category-breakdown'),
-          api.get<MonthlyTrend[]>('/dashboard/trends?months=6'),
-        ]);
-        if (catRes.success && catRes.data) setCategories(catRes.data);
-        if (trendRes.success && trendRes.data) setTrends(trendRes.data);
+        // These require analyst/admin roles
+        if (user.role === 'analyst' || user.role === 'admin') {
+          const [catRes, trendRes] = await Promise.all([
+            api.get<CategoryBreakdown[]>('/dashboard/category-breakdown'),
+            api.get<MonthlyTrend[]>('/dashboard/trends?months=6'),
+          ]);
+          if (catRes.success && catRes.data) {
+            setCategories(catRes.data);
+          }
+          if (trendRes.success && trendRes.data) {
+            setTrends(trendRes.data);
+          }
+        }
       } catch {
         setError('Failed to load dashboard data');
       } finally {
@@ -35,7 +45,7 @@ export function useDashboard() {
       }
     }
     fetchAll();
-  }, []);
+  }, [user]);
 
   return { summary, categories, trends, recent, loading, error };
 }

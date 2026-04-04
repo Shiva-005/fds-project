@@ -26,6 +26,10 @@ export function RecentTransactions({ records, loading }: { records: FinancialRec
         <div style={{ height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid var(--border2)', borderTopColor: 'var(--gold)', animation: 'spin 0.7s linear infinite' }} />
         </div>
+      ) : records.length === 0 ? (
+        <div style={{ height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: '13px' }}>
+          No transactions available
+        </div>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
