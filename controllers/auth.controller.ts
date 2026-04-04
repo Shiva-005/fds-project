@@ -11,6 +11,7 @@ import {
 } from '@/utils/response';
 import { logger } from '@/utils/logger';
 import { ZodError } from 'zod';
+import { connectDB } from '@/lib/db';
 
 export const AuthController = {
   async register(req: NextRequest): Promise<NextResponse> {
@@ -41,6 +42,7 @@ export const AuthController = {
 
   async login(req: NextRequest): Promise<NextResponse> {
     try {
+      await connectDB();
       const body = await req.json();
       const parsed = loginSchema.safeParse(body);
 
@@ -49,6 +51,7 @@ export const AuthController = {
       }
 
       const { email, password } = parsed.data;
+      
       const user = await UserService.findByEmail(email);
 
       if (!user || !(await user.comparePassword(password))) {

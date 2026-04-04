@@ -5,7 +5,11 @@ interface RateLimitEntry {
     resetTime: number;
 }
 
-const rateLimitStore = new Map<string, RateLimitEntry>();
+// Use global object for serverless persistence
+const rateLimitStore: Map<string, RateLimitEntry> = (global as any).rateLimitStore ?? new Map();
+if (!(global as any).rateLimitStore) {
+    (global as any).rateLimitStore = rateLimitStore;
+}
 
 interface RateLimitOptions {
     windowMs: number;
@@ -48,6 +52,14 @@ export function createRateLimiter(options: RateLimitOptions) {
 }
 
 // Cleanup old entries every 10 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of rateLimitStore.entries()) {
+        if (now > entry.resetTime) {
+            rateLimitStore.delete(key);
+        }
+    }
+}, 10 * 60 * 1000);
 setInterval(() => {
     const now = Date.now();
     for (const [key, entry] of rateLimitStore.entries()) {

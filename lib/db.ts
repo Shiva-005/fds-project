@@ -26,14 +26,23 @@ export async function connectDB(): Promise<typeof mongoose> {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
-            maxPoolSize: 10,
+            maxPoolSize: 5, // Reduced for serverless
+            minPoolSize: 0, // Allow pool to close
+            maxIdleTimeMS: 30000, // Close connections after 30s of inactivity
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
+            connectTimeoutMS: 10000, // Add connection timeout
+            retryWrites: true,
+            retryReads: true,
         };
 
         cached.promise = mongoose.connect(MONGODB_URI, opts).then((mg) => {
             logger.info('MongoDB connected successfully');
             return mg;
+        }).catch((err) => {
+            logger.error('MongoDB connection failed', { error: err });
+            cached.promise = null; // Reset promise on failure
+            throw err;
         });
     }
 
