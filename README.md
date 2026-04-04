@@ -1,73 +1,89 @@
 # Financial Dashboard System (FDS)
 
-A modern, full-stack financial records management and analytics dashboard built with **Next.js 16**, **TypeScript**, **MongoDB**, and **React 19**. Track income and expenses, visualize financial trends, and manage user accounts with role-based access control.
+A full-stack financial records management application built with **Next.js 16**, **TypeScript**, **MongoDB**, and **React 19**. Users can log in, view dashboards, manage financial records, and administer accounts with role-based access control.
 
 ## 🎯 Features
 
 ### 📊 Core Functionality
-- **Financial Record Management**: Create, read, update, and delete income/expense records
-- **Dashboard Analytics**: View financial summaries, category breakdowns, recent transactions, and trends
-- **User Management**: Admin panel for managing users and their roles
-- **Role-Based Access Control**: Three user roles (viewer, analyst, admin) with granular permissions
+- **Financial Record Management**: Create, read, update, and delete income and expense records
+- **Dashboard Analytics**: Financial summary, category breakdown, recent transactions, and trend charts
+- **User Management**: Admin interface for listing and updating users
+- **Role-Based Access Control**: Viewer, analyst, and admin roles with permission checks
 
 ### 🔐 Security Features
-- **JWT Authentication**: Secure token-based authentication with HttpOnly cookies
-- **Password Security**: Bcrypt password hashing with configurable cost factors
-- **Rate Limiting**: Built-in rate limiting to prevent API abuse
-- **Input Validation**: Zod schemas for comprehensive request validation
-- **CORS Support**: Properly configured cross-origin request handling
+- **JWT Authentication**: Token-based auth with HttpOnly cookies
+- **Password Security**: Bcrypt password hashing
+- **Rate Limiting**: Endpoint-level request throttling for auth routes
+- **Input Validation**: Zod schemas validate incoming request payloads
+- **Secure Cookies**: `secure` cookie flag enabled in production
 
 ### 🎨 User Interface
-- **Modern Design**: Built with Radix UI components and Tailwind CSS
-- **Responsive Layout**: Mobile-friendly interface with responsive panels
-- **Dark Mode Support**: Next.js Themes integration for theme switching
-- **Smooth Animations**: Framer Motion for polished animations and transitions
-- **Toast Notifications**: Sonner for user-friendly notifications
+- **Custom UI**: Responsive interface built with CSS and custom React components
+- **Dashboard Layout**: Sidebar navigation, topbar actions, and page sections
+- **Record Management**: Filters, create/edit forms, and recent transaction list
+- **Settings Screen**: User preferences and account actions
+- **Charting**: Chart.js loaded via CDN for dashboard visuals
 
 ### 📈 Developer Experience
-- **TypeScript**: Full type safety with strict mode enabled
-- **ESLint**: Code quality enforcement with Next.js ESLint config
-- **Comprehensive Logging**: Winston-based structured logging
-- **Error Handling**: Standardized response utilities for consistent API responses
-- **React Compiler**: Babel plugin for optimized React compilation
+- **TypeScript**: Strong typing throughout frontend and backend
+- **ESLint**: Next.js linting for code quality
+- **Logging**: Structured logging via Winston
+- **API Error Handling**: Consistent response utilities across route handlers
 
 ## 🏗️ Architecture
+
+The application uses the Next.js App Router with a nested dashboard segment group. The root layout wraps all pages with authentication and toast providers, while the dashboard layout enforces client-side auth and renders the sidebar/topbar shell.
 
 ```
 fds-project/
 ├── app/                          # Next.js App Router
-│   ├── api/                     # API Routes (Route Handlers)
-│   │   ├── auth/               # Authentication endpoints
-│   │   ├── dashboard/          # Analytics endpoints
-│   │   ├── records/            # Financial records endpoints
-│   │   └── users/              # User management endpoints
-│   ├── layout.tsx              # Root layout
-│   ├── page.tsx                # Home page (Testing dashboard)
-│   └── globals.css             # Global styles
-├── controllers/                 # Request handlers & business logic
+│   ├── (dashboard)/              # Authenticated dashboard segment group
+│   │   ├── analytics/            # Analytics page
+│   │   │   └── page.tsx
+│   │   ├── dashboard/            # Main dashboard page
+│   │   │   └── page.tsx
+│   │   ├── records/              # Records management page
+│   │   │   └── page.tsx
+│   │   ├── settings/             # User settings page
+│   │   │   └── page.tsx
+│   │   └── users/                # User management page
+│   │       └── page.tsx
+│   ├── api/                      # API Routes (Route Handlers)
+│   │   ├── auth/                 # Authentication endpoints
+│   │   ├── dashboard/            # Analytics endpoints
+│   │   ├── records/              # Financial records endpoints
+│   │   └── users/                # User management endpoints
+│   ├── login/                    # Login page
+│   │   └── page.tsx
+│   ├── register/                 # Registration page
+│   │   └── page.tsx
+│   ├── page.tsx                  # Redirects to /login
+│   ├── layout.tsx                # Root layout
+│   └── globals.css               # Global styles
+├── controllers/                  # Request handlers & business logic
 │   ├── auth.controller.ts
 │   ├── finance.controller.ts
 │   └── user.controller.ts
-├── services/                    # Data layer & business logic
+├── services/                     # Data access and domain logic
 │   ├── finance.service.ts
 │   └── user.service.ts
-├── models/                      # MongoDB schemas & Mongoose models
+├── models/                       # Mongoose schemas and models
 │   ├── User.ts
 │   └── FinancialRecord.ts
-├── lib/                         # Core utilities
-│   ├── auth.ts                 # JWT utilities
-│   └── db.ts                   # MongoDB connection management
-├── middleware/                  # Request middleware
-│   └── auth.middleware.ts       # JWT verification & role authorization
-├── validators/                  # Input validation schemas
+├── lib/                          # Core utilities
+│   ├── auth.ts                   # JWT and cookie helpers
+│   └── db.ts                     # MongoDB connection management
+├── middleware/                   # Authentication middleware
+│   └── auth.middleware.ts        # JWT verification and role checks
+├── validators/                   # Request validation schemas
 │   ├── auth.validator.ts
 │   ├── record.validator.ts
 │   └── user.validator.ts
-├── utils/                       # Utility functions
-│   ├── logger.ts               # Winston logging setup
-│   ├── rateLimiter.ts          # Rate limiting implementation
-│   └── response.ts             # Standardized response helpers
-└── public/                      # Static assets
+├── utils/                        # Utility helpers
+│   ├── logger.ts                 # Winston logger setup
+│   ├── rateLimiter.ts            # Rate limiting utility
+│   └── response.ts               # Standard response helpers
+└── public/                       # Static assets
 ```
 
 ## 🚀 Quick Start
@@ -94,21 +110,14 @@ fds-project/
    
    Create a `.env` file in the root directory:
    ```env
-   # Database Configuration
-   MONGODB_URI=mongodb://localhost:27017/finance_dashboard
-   DB_NAME=finance_dashboard
-   
-   # JWT Configuration
-   JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+   # MongoDB Atlas connection string
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.zyjxhuq.mongodb.net/finance_dashboard?retryWrites=true&w=majority
+   JWT_SECRET=replace-with-strong-secret
    JWT_EXPIRES_IN=7d
-   
-   # Admin Account (for initial setup)
-   ADMIN_EMAIL=admin@financeapp.com
-   ADMIN_PASSWORD=AdminSecure123!
-   
-   # Node Environment
    NODE_ENV=development
    ```
+
+   If you prefer to use a local MongoDB instance instead, replace `MONGODB_URI` with a local connection string like `mongodb://localhost:27017/finance_dashboard`.
 
 4. **Start MongoDB** (if running locally)
    ```bash
@@ -128,7 +137,24 @@ fds-project/
    
    Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 📖 Available Scripts
+## � Admin User Setup
+
+The project does not currently include an automatic admin seed script. To create an administrator account:
+
+- Use the `POST /api/auth/register` endpoint to register a new user.
+- Then update that user in the database to the `admin` role, or insert an admin user directly into MongoDB.
+
+If you prefer to create the first admin user directly in MongoDB, insert a user document with:
+
+- `name`
+- `email`
+- `password` hashed with bcrypt
+- `role: 'admin'`
+- `status: 'active'`
+
+> Tip: If you create an admin account manually, make sure the password is hashed before storing it.
+
+## �📖 Available Scripts
 
 ```bash
 # Development server (with hot reload)
@@ -148,44 +174,41 @@ npm run lint
 
 ### Authentication
 - `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Login user (returns JWT)
-- `POST /api/auth/logout` - Logout user
+- `POST /api/auth/login` - Log in a user and set auth cookie
+- `POST /api/auth/logout` - Clear auth cookie
 
 ### Financial Records
-- `GET /api/records` - List all records (with pagination & filtering)
-- `POST /api/records` - Create a new record (admin only)
-- `PATCH /api/records/[id]` - Update a record (admin only)
-- `DELETE /api/records/[id]` - Delete a record (admin only)
+- `GET /api/records` - List records with optional filtering
+- `POST /api/records` - Create a new record
+- `PATCH /api/records/[id]` - Update a record
+- `DELETE /api/records/[id]` - Soft delete a record
 
 ### Dashboard Analytics
-- `GET /api/dashboard/summary` - Financial summary (total income/expense)
-- `GET /api/dashboard/category-breakdown` - Income/expense by category
+- `GET /api/dashboard/summary` - Financial summary totals
+- `GET /api/dashboard/category-breakdown` - Category breakdown data
 - `GET /api/dashboard/trends` - Trends over time
 - `GET /api/dashboard/recent` - Recent transactions
 
 ### User Management
-- `GET /api/users` - List all users (admin only)
-- `POST /api/users` - Create user (admin only)
-- `PATCH /api/users/[id]` - Update user (admin only)
-- `DELETE /api/users/[id]` - Delete user (admin only)
+- `GET /api/users` - List all users
+- `POST /api/users` - Create a new user
+- `PATCH /api/users/[id]` - Update user details
+- `DELETE /api/users/[id]` - Delete a user
 
 ## 🔑 User Roles & Permissions
 
 ### Admin
-- Full access to all endpoints
-- Create, update, delete records
-- Manage users and their roles
-- Access all analytics
+- Full access to dashboard and data management
+- Create, update, and delete records
+- Manage user accounts and roles
 
 ### Analyst
-- Read access to financial records
-- Create and manage own records
-- Access analytics dashboards
+- Access analytics and record listings
+- Create and edit own records
 
 ### Viewer
-- Read-only access to financial data
-- View analytics dashboards
-- Cannot create or modify records
+- Read-only access to records and dashboards
+- Cannot modify records or manage users
 
 ## 💾 Database Schema
 
@@ -219,12 +242,12 @@ npm run lint
 
 ## 🧪 Testing the API
 
-The home page (`/`) includes an interactive testing dashboard where you can:
+The app redirects `/` to `/login` and then provides an authenticated dashboard flow where you can:
 - Register new users
-- Login and manage tokens
+- Log in and manage tokens
 - Create, read, update, and delete financial records
-- Manage users
-- Test all API endpoints
+- View analytics and recent transactions
+- Manage users (admin only)
 
 ## ⚙️ Configuration
 
@@ -232,12 +255,9 @@ The home page (`/`) includes an interactive testing dashboard where you can:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/finance_dashboard` |
-| `DB_NAME` | Database name | `finance_dashboard` |
-| `JWT_SECRET` | Secret key for JWT signing | `your-secret-key` |
+| `MONGODB_URI` | MongoDB Atlas or local connection string | `mongodb+srv://<username>:<password>@cluster0.zyjxhuq.mongodb.net/finance_dashboard?retryWrites=true&w=majority` |
+| `JWT_SECRET` | Secret key for JWT signing | `replace-with-strong-secret` |
 | `JWT_EXPIRES_IN` | JWT expiration time | `7d` |
-| `ADMIN_EMAIL` | Default admin email | `admin@financeapp.com` |
-| `ADMIN_PASSWORD` | Default admin password | `AdminSecure123!` |
 | `NODE_ENV` | Environment (development/production) | `development` |
 
 ### TypeScript Configuration
@@ -247,52 +267,39 @@ The home page (`/`) includes an interactive testing dashboard where you can:
 - **Strict Mode**: Enabled
 - **Path Aliases**: `@/*` for root imports
 
-### Tailwind CSS
-
-Configured with:
-- Radix UI plugin for component variables
-- CSS nesting support
-- Automatic dark mode support
 
 ## 📚 Tech Stack
 
 ### Frontend
-- **React 19.2.4** - UI library
-- **Next.js 16.2.2** - Full-stack framework
-- **TypeScript 5** - Type safety
-- **Tailwind CSS 4** - Utility-first styling
-- **Radix UI** - Headless component library
-- **Framer Motion** - Animation library
-- **Recharts** - Data visualization
-- **React Hook Form** - Form management
-- **Zod** - Schema validation
+- **React 19.2.4**
+- **Next.js 16.2.2**
+- **TypeScript 5**
+- **CSS**
+- **Zod** for frontend and backend validation
 
 ### Backend
-- **Next.js 16** - API routes & server runtime
-- **Node.js** - JavaScript runtime
-- **MongoDB 9.3.3** - NoSQL database
-- **Mongoose 9.3.3** - ODM library
-- **JWT** - Authentication
-- **Bcryptjs** - Password hashing
-- **Express Rate Limit** - Rate limiting
+- **Next.js 16** server runtime
+- **Node.js**
+- **MongoDB**
+- **Mongoose 9.3.3**
+- **JWT** for auth
+- **Bcryptjs** for password hashing
 
 ### Development Tools
-- **ESLint 9** - Code linting
-- **Babel React Compiler** - React optimization
-- **Winston** - Logging
+- **ESLint 9**
+- **Babel React Compiler**
+- **Winston** for logging
 
 ## 🔒 Security Best Practices
 
 ✅ Implemented:
 - Password hashing with bcryptjs
 - JWT tokens with configurable expiration
-- HttpOnly cookies (secure by default in production)
-- Rate limiting on all endpoints
-- Input validation with Zod schemas
-- CORS headers
-- User role-based authorization
-- Soft delete for financial records (audit trail)
-- Proper error messages (no sensitive data leakage)
+- HttpOnly cookies for authentication
+- Rate limiting for authentication endpoints
+- Input validation using Zod
+- Role-based authorization
+- Soft deletion for records
 
 ## 📝 Logging
 
@@ -305,9 +312,9 @@ logger.warn('Rate limit exceeded', { ip, endpoint });
 
 Logs include:
 - Timestamp
-- Log level (info, warn, error)
+- Log level
 - Message
-- Contextual metadata
+- Metadata
 
 ## 🐛 Common Issues & Solutions
 
@@ -324,35 +331,28 @@ docker run -d -p 27017:27017 mongo
 ```
 
 ### JWT Token Expired
-- Tokens expire after the duration specified in `JWT_EXPIRES_IN`
-- Log in again to get a fresh token
+- Tokens expire after `JWT_EXPIRES_IN`
+- Log in again to refresh the token
 
 ### Rate Limit Hit
-- Wait for the duration specified in the `Retry-After` header
-- Rate limits are applied per IP per endpoint
+- Wait for the `Retry-After` header
+- Rate limiting is applied per IP on login/register
 
 ### ValidationError from Zod
-- Check request payload against the schema
-- Ensure all required fields are present and correct type
+- Verify request payload shape
+- Ensure required fields are present
 
 ## 🚀 Production Deployment
 
 ### Pre-Deployment Checklist
 ```bash
-# ✅ Run linter
 npm run lint
-
-# ✅ Build project
 npm run build
-
-# ✅ Set secure environment variables
-#    - Use strong JWT_SECRET
-#    - Use production MongoDB URI
-#    - Enable NODE_ENV=production
-
-# ✅ Use HTTPS in production
-#    - Set cookie secure flag (automatic when NODE_ENV=production)
 ```
+- Use a secure `JWT_SECRET`
+- Use a production `MONGODB_URI`
+- Set `NODE_ENV=production`
+- Serve over HTTPS
 
 ## 📖 Learn More
 
@@ -360,31 +360,16 @@ npm run build
 - [Next.js Documentation](https://nextjs.org/docs)
 - [MongoDB Documentation](https://docs.mongodb.com/)
 - [Mongoose Documentation](https://mongoosejs.com/)
-- [Radix UI](https://www.radix-ui.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
-
-### Related Guides
-- [Next.js Deployment](https://nextjs.org/docs/deployment)
-- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-- [JWT Best Practices](https://tools.ietf.org/html/rfc8725)
-
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Contributions are welcome. Please open a PR for improvements.
 
 ## 📞 Support
 
 For questions or issues:
 - Create an issue on GitHub
 - Check existing documentation
-- Review the testing dashboard on the home page
 
 ---
 
