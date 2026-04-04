@@ -11,9 +11,9 @@ export const GET = verifyJWT(
     )
 );
 
-// PATCH /api/records/:id — admin only
+// PATCH /api/records/:id — analyst and admin
 export const PATCH = verifyJWT(
-    authorizeRoles('admin')(
+    authorizeRoles('analyst', 'admin')(
         async (req: AuthenticatedRequest, context: { params: Promise<Record<string, string>> }) => {
             const params = await context.params;
             return FinanceController.updateRecord(req, params.id);
@@ -21,9 +21,9 @@ export const PATCH = verifyJWT(
     )
 );
 
-// DELETE /api/records/:id — admin only
+// DELETE /api/records/:id — analyst and admin
 export const DELETE = verifyJWT(
-    authorizeRoles('admin')(
+    authorizeRoles('analyst', 'admin')(
         async (req: AuthenticatedRequest, context: { params: Promise<Record<string, string>> }) => {
             const params = await context.params;
             return FinanceController.deleteRecord(req, params.id);

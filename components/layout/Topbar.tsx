@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { useRecords } from '@/hooks/useRecords';
 import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/context/AuthContext';
 
 const pageTitles: Record<string, { title: string; bc: string }> = {
   '/dashboard': { title: 'Dashboard', bc: 'FDS / overview' },
@@ -20,8 +21,10 @@ export function Topbar() {
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ amount: '', type: 'income', category: 'Salary', date: new Date().toISOString().split('T')[0], note: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const { createRecord } = useRecords();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const submit = async () => {
     if (!form.amount) { toast('Please enter an amount', 'error'); return; }
@@ -40,9 +43,52 @@ export function Topbar() {
           <div style={{ fontSize: '11px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{page.bc}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button onClick={() => setModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '7px', border: '1px solid var(--gold)', background: 'var(--gold)', color: '#080C14', fontSize: '12px', fontFamily: 'var(--sans)', cursor: 'pointer', fontWeight: 600 }}>
-            + Add Record
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => user?.role !== 'analyst' && setModal(true)} 
+              onMouseEnter={() => user?.role === 'analyst' && setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+              disabled={user?.role === 'analyst'}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px', 
+                padding: '7px 14px', 
+                borderRadius: '7px', 
+                border: user?.role === 'analyst' ? '1px solid var(--border2)' : '1px solid var(--gold)', 
+                background: user?.role === 'analyst' ? 'var(--surface2)' : 'var(--gold)', 
+                color: user?.role === 'analyst' ? 'var(--text3)' : '#080C14', 
+                fontSize: '12px', 
+                fontFamily: 'var(--sans)', 
+                cursor: user?.role === 'analyst' ? 'not-allowed' : 'pointer', 
+                fontWeight: 600,
+                opacity: user?.role === 'analyst' ? 0.6 : 1
+              }}
+            >
+              + Add Record
+            </button>
+            {showTooltip && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                marginTop: '8px',
+                padding: '8px 12px',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: '6px',
+                color: 'var(--text2)',
+                fontSize: '11px',
+                fontFamily: 'var(--sans)',
+                whiteSpace: 'nowrap',
+                zIndex: 1000,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+              }}>
+                Analysts cannot add records
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

@@ -11,7 +11,7 @@ const navItems = [
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: 'grid' },
       { label: 'Records', href: '/records', icon: 'list' },
-      { label: 'Analytics', href: '/analytics', icon: 'chart' },
+      { label: 'Analytics', href: '/analytics', icon: 'chart', roles: ['admin', 'analyst'] },
     ],
   },
   {

@@ -8,9 +8,9 @@ export const GET = verifyJWT(
     )
 );
 
-// POST /api/records — admin only
+// POST /api/records — analyst and admin
 export const POST = verifyJWT(
-    authorizeRoles('admin')(
+    authorizeRoles('analyst', 'admin')(
         async (req: AuthenticatedRequest) => FinanceController.createRecord(req)
     )
 );

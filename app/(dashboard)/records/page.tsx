@@ -5,6 +5,7 @@ import { useRecords } from '@/hooks/useRecords';
 import { useToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import { FinancialRecord } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 const catColors: Record<string, string> = {
   Salary: '#2DD4A0', Freelance: '#C9A84C', Investments: '#4A90E2',
@@ -21,6 +22,7 @@ function fmt(n: number) {
 export default function RecordsPage() {
   const { records, meta, loading, filters, updateFilters, createRecord, updateRecord, deleteRecord } = useRecords({ limit: 10 });
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [editRecord, setEditRecord] = useState<FinancialRecord | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -88,18 +90,18 @@ export default function RecordsPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {['Category', 'Date', 'Note', 'Type', 'Amount', 'Actions'].map((h, i) => (
+              {['Category', 'Date', 'Note', 'Type', 'Amount', ...(user?.role === 'admin' ? ['Actions'] : [])].map((h, i) => (
                 <th key={h} style={{ background: 'var(--surface2)', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '12px 16px', textAlign: i >= 4 ? 'right' : 'left', fontWeight: 500, fontFamily: 'var(--mono)', borderBottom: '1px solid var(--border)' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} style={{ padding: '48px', textAlign: 'center' }}>
+              <tr><td colSpan={user?.role === 'admin' ? 6 : 5} style={{ padding: '48px', textAlign: 'center' }}>
                 <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '2px solid var(--border2)', borderTopColor: 'var(--gold)', animation: 'spin 0.7s linear infinite', margin: '0 auto' }} />
               </td></tr>
             ) : records.length === 0 ? (
-              <tr><td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: 'var(--text3)', fontSize: '13px' }}>No records found</td></tr>
+              <tr><td colSpan={user?.role === 'admin' ? 6 : 5} style={{ padding: '48px', textAlign: 'center', color: 'var(--text3)', fontSize: '13px' }}>No records found</td></tr>
             ) : records.map((r) => (
               <tr key={r._id} style={{ transition: 'background 0.1s' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.01)')}
@@ -118,12 +120,14 @@ export default function RecordsPage() {
                 <td style={{ padding: '13px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right', fontFamily: 'var(--mono)', fontSize: '13px', fontWeight: 500, color: r.type === 'income' ? 'var(--green)' : 'var(--red)' }}>
                   {r.type === 'income' ? '+' : '-'}{fmt(r.amount)}
                 </td>
-                <td style={{ padding: '13px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>
-                  <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                    <button onClick={() => openEdit(r)} style={{ padding: '4px 8px', borderRadius: '5px', border: '1px solid var(--border2)', background: 'none', color: 'var(--text3)', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--mono)' }}>Edit</button>
-                    <button onClick={() => setDeleteId(r._id)} style={{ padding: '4px 8px', borderRadius: '5px', border: '1px solid rgba(240,107,107,0.3)', background: 'none', color: 'var(--red)', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--mono)' }}>Del</button>
-                  </div>
-                </td>
+                {user?.role === 'admin' && (
+                  <td style={{ padding: '13px 16px', borderBottom: '1px solid var(--border)', textAlign: 'right' }}>
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                      <button onClick={() => openEdit(r)} style={{ padding: '4px 8px', borderRadius: '5px', border: '1px solid var(--border2)', background: 'none', color: 'var(--text3)', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--mono)' }}>Edit</button>
+                      <button onClick={() => setDeleteId(r._id)} style={{ padding: '4px 8px', borderRadius: '5px', border: '1px solid rgba(240,107,107,0.3)', background: 'none', color: 'var(--red)', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--mono)' }}>Del</button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

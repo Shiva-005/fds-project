@@ -39,7 +39,7 @@ export const FinanceController = {
       const parsed = listRecordsQuerySchema.safeParse(queryObj);
       if (!parsed.success) return validationErrorResponse(parsed.error.issues);
 
-      const result = await FinanceService.listRecords(req.user.userId, parsed.data);
+      const result = await FinanceService.listRecords(req.user.userId, req.user.role, parsed.data);
       return successResponse(result.records, 'Records retrieved successfully', 200, {
         total: result.total,
         page: result.page,
@@ -71,6 +71,14 @@ export const FinanceController = {
       const parsed = updateRecordSchema.safeParse(body);
       if (!parsed.success) return validationErrorResponse(parsed.error.issues);
 
+      // Check ownership for analyst
+      if (req.user.role === 'analyst') {
+        const record = await FinanceService.getRecordById(id);
+        if (!record || record.createdBy.toString() !== req.user.userId) {
+          return errorResponse('Forbidden: You can only edit your own records', 403);
+        }
+      }
+
       const record = await FinanceService.updateRecord(id, parsed.data);
       if (!record) return notFoundResponse('Financial record not found');
       const normalized = record.toObject ? record.toObject({ getters: true, virtuals: true }) : record;
@@ -82,8 +90,16 @@ export const FinanceController = {
     }
   },
 
-  async deleteRecord(_req: AuthenticatedRequest, id: string): Promise<NextResponse> {
+  async deleteRecord(req: AuthenticatedRequest, id: string): Promise<NextResponse> {
     try {
+      // Check ownership for analyst
+      if (req.user.role === 'analyst') {
+        const record = await FinanceService.getRecordById(id);
+        if (!record || record.createdBy.toString() !== req.user.userId) {
+          return errorResponse('Forbidden: You can only delete your own records', 403);
+        }
+      }
+
       const deleted = await FinanceService.softDeleteRecord(id);
       if (!deleted) return notFoundResponse('Financial record not found');
       return successResponse(null, 'Record deleted successfully');
@@ -97,7 +113,7 @@ export const FinanceController = {
 
   async getSummary(req: AuthenticatedRequest): Promise<NextResponse> {
     try {
-      const summary = await FinanceService.getSummary(req.user.userId);
+      const summary = await FinanceService.getSummary(req.user.userId, req.user.role);
       return successResponse(summary, 'Dashboard summary retrieved');
     } catch (error) {
       logger.error('Get summary error', { error });
@@ -107,7 +123,7 @@ export const FinanceController = {
 
   async getCategoryBreakdown(req: AuthenticatedRequest): Promise<NextResponse> {
     try {
-      const breakdown = await FinanceService.getCategoryBreakdown(req.user.userId);
+      const breakdown = await FinanceService.getCategoryBreakdown(req.user.userId, req.user.role);
       return successResponse(breakdown, 'Category breakdown retrieved');
     } catch (error) {
       logger.error('Get category breakdown error', { error });
@@ -119,7 +135,7 @@ export const FinanceController = {
     try {
       const { searchParams } = new URL(req.url);
       const months = parseInt(searchParams.get('months') ?? '12', 10);
-      const trends = await FinanceService.getMonthlyTrends(req.user.userId, months);
+      const trends = await FinanceService.getMonthlyTrends(req.user.userId, months, req.user.role);
       return successResponse(trends, 'Monthly trends retrieved');
     } catch (error) {
       logger.error('Get trends error', { error });
@@ -129,7 +145,7 @@ export const FinanceController = {
 
   async getRecentTransactions(req: AuthenticatedRequest): Promise<NextResponse> {
     try {
-      const transactions = await FinanceService.getRecentTransactions(req.user.userId);
+      const transactions = await FinanceService.getRecentTransactions(req.user.userId, 5, req.user.role);
       return successResponse(transactions, 'Recent transactions retrieved');
     } catch (error) {
       logger.error('Get recent transactions error', { error });

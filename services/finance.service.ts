@@ -21,13 +21,16 @@ export const FinanceService = {
         return record;
     },
 
-    async listRecords(userId: string, query: ListRecordsQuery): Promise<PaginatedRecords> {
+    async listRecords(userId: string, userRole: string, query: ListRecordsQuery): Promise<PaginatedRecords> {
         await connectDB();
 
         const { page, limit, type, category, startDate, endDate, search, sortBy, sortOrder } = query;
         const skip = (page - 1) * limit;
 
-        const filter: Record<string, unknown> = { isDeleted: false, createdBy: new mongoose.Types.ObjectId(userId) };
+        const filter: Record<string, unknown> = { isDeleted: false };
+        if (userRole !== 'admin' && userRole !== 'analyst' && userRole !== 'viewer') {
+            filter.createdBy = new mongoose.Types.ObjectId(userId);
+        }
         if (type) filter.type = type;
         if (category) filter.category = { $regex: category, $options: 'i' };
         if (startDate || endDate) {
@@ -105,10 +108,14 @@ export const FinanceService = {
 
     // ─── Dashboard Aggregations ─────────────────────────────────────────────────
 
-    async getSummary(userId: string) {
+    async getSummary(userId: string, userRole?: string) {
         await connectDB();
+        const matchFilter: Record<string, unknown> = { isDeleted: false };
+        if (userRole !== 'admin' && userRole !== 'analyst' && userRole !== 'viewer') {
+            matchFilter.createdBy = new mongoose.Types.ObjectId(userId);
+        }
         const result = await FinancialRecord.aggregate([
-            { $match: { isDeleted: false, createdBy: new mongoose.Types.ObjectId(userId) } },
+            { $match: matchFilter },
             {
                 $group: {
                     _id: '$type',
@@ -133,10 +140,14 @@ export const FinanceService = {
         };
     },
 
-    async getCategoryBreakdown(userId: string) {
+    async getCategoryBreakdown(userId: string, userRole?: string) {
         await connectDB();
+        const matchFilter: Record<string, unknown> = { isDeleted: false };
+        if (userRole !== 'admin' && userRole !== 'analyst' && userRole !== 'viewer') {
+            matchFilter.createdBy = new mongoose.Types.ObjectId(userId);
+        }
         const result = await FinancialRecord.aggregate([
-            { $match: { isDeleted: false, createdBy: new mongoose.Types.ObjectId(userId) } },
+            { $match: matchFilter },
             {
                 $group: {
                     _id: { category: '$category', type: '$type' },
@@ -170,21 +181,23 @@ export const FinanceService = {
         return result;
     },
 
-    async getMonthlyTrends(userId: string, months = 12) {
+    async getMonthlyTrends(userId: string, months = 12, userRole?: string) {
         await connectDB();
         const startDate = new Date();
         startDate.setMonth(startDate.getMonth() - months + 1);
         startDate.setDate(1);
         startDate.setHours(0, 0, 0, 0);
 
+        const matchFilter: Record<string, unknown> = {
+            isDeleted: false,
+            date: { $gte: startDate },
+        };
+        if (userRole !== 'admin' && userRole !== 'analyst' && userRole !== 'viewer') {
+            matchFilter.createdBy = new mongoose.Types.ObjectId(userId);
+        }
+
         return FinancialRecord.aggregate([
-            {
-                $match: {
-                    isDeleted: false,
-                    createdBy: new mongoose.Types.ObjectId(userId),
-                    date: { $gte: startDate },
-                },
-            },
+            { $match: matchFilter },
             {
                 $group: {
                     _id: {
@@ -220,9 +233,13 @@ export const FinanceService = {
         ]);
     },
 
-    async getRecentTransactions(userId: string, limit = 5) {
+    async getRecentTransactions(userId: string, limit = 5, userRole?: string) {
         await connectDB();
-        return FinancialRecord.find({ isDeleted: false, createdBy: new mongoose.Types.ObjectId(userId) })
+        const filter: Record<string, unknown> = { isDeleted: false };
+        if (userRole !== 'admin' && userRole !== 'analyst') {
+            filter.createdBy = new mongoose.Types.ObjectId(userId);
+        }
+        return FinancialRecord.find(filter)
             .populate('createdBy', 'name email')
             .sort({ date: -1 })
             .limit(limit)
