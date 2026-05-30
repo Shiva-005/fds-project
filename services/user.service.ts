@@ -2,7 +2,6 @@ import User, { IUserDocument, UserRole, UserStatus } from '@/models/User';
 import { RegisterInput } from '@/validators/auth.validator';
 import { ListUsersQuery } from '@/validators/user.validator';
 import { connectDB } from '@/lib/db';
-// import { logger } from '@/utils/logger';
 
 export interface PaginatedUsers {
   users: ReturnType<IUserDocument['toSafeObject']>[];
@@ -23,7 +22,6 @@ export const UserService = {
 
     const user = new User(data);
     await user.save();
-    // logger.info('User created', { userId: user._id, email: user.email });
     return user;
   },
 
@@ -71,14 +69,12 @@ export const UserService = {
   async updateRole(id: string, role: UserRole): Promise<IUserDocument | null> {
     await connectDB();
     const user = await User.findByIdAndUpdate(id, { role }, { new: true, runValidators: true });
-    // if (user) logger.info('User role updated', { userId: id, newRole: role });
     return user;
   },
 
   async updateStatus(id: string, status: UserStatus): Promise<IUserDocument | null> {
     await connectDB();
     const user = await User.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
-    // if (user) logger.info('User status updated', { userId: id, newStatus: status });
     return user;
   },
 
